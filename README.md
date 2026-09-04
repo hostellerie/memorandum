@@ -54,6 +54,7 @@ Additional conventions:
 
 - [`plugin-persistent-storage-guide.md`](plugin-persistent-storage-guide.md)
 - [`multisite-development-principles.md`](multisite-development-principles.md)
+- [`plugin-shared-files-upgrade-safety.md`](plugin-shared-files-upgrade-safety.md) — required compatibility behavior when several sites share plugin files but upgrade their persisted state at different times.
 
 ### 3. Active modernization roadmap
 
@@ -170,6 +171,8 @@ Upgrade routines should be:
 
 Configuration defaults for new installations and configuration migration for existing installations are separate concerns and should be tested separately.
 
+When plugin files can be shared by several Geeklog sites, new files must also remain operational with the previous supported persisted plugin state until the active site's explicit upgrade completes. See [`plugin-shared-files-upgrade-safety.md`](plugin-shared-files-upgrade-safety.md).
+
 ## Persistent storage
 
 User files and persistent plugin or theme data must not be stored in locations that Geeklog treats as disposable cache.
@@ -189,6 +192,8 @@ Every project storing persistent data should define:
 - migration behavior.
 
 The future **Multisite Manager** can remain a later implementation project while these principles apply immediately. See [`multisite-development-principles.md`](multisite-development-principles.md).
+
+For shared plugin directories, upgrading one site's persisted state must not be required for other sites to keep running after the new files are deployed. The shared-files transition policy is defined in [`plugin-shared-files-upgrade-safety.md`](plugin-shared-files-upgrade-safety.md).
 
 ## Plugin content interoperability
 
