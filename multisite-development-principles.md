@@ -79,6 +79,18 @@ When migrating files or configuration:
 - make migrations repeatable where practical;
 - log enough context to identify the affected site.
 
+### Shared plugin files and staggered upgrades
+
+A multisite installation may share one plugin directory while each site stores its own installed plugin version, configuration and persistent data.
+
+In that situation, replacing the shared plugin files updates the executable code for every site immediately, but each site may complete its Geeklog plugin upgrade later and independently.
+
+New plugin code must therefore remain operational with the previous supported persisted plugin state until the active site's upgrade has completed successfully.
+
+Uploading new shared files must not require every site to run its migration at the same time.
+
+The full policy, implementation patterns and release checklist are defined in [`plugin-shared-files-upgrade-safety.md`](plugin-shared-files-upgrade-safety.md).
+
 ## Compatibility layer
 
 Current plugins may need compatibility code because Geeklog 2.1.1 and 2.2.2 do not expose exactly the same facilities.
@@ -122,6 +134,8 @@ A plugin claiming multisite-safe behavior should be tested with at least two sit
 - database table mappings or prefixes where applicable.
 
 Actions performed on site A must not alter site B's files, configuration or records.
+
+For releases that change persistent plugin state, also test a staggered-upgrade scenario where both sites execute the new shared plugin files but only one site has completed the new plugin migration. The site still using the previous persisted state must continue to operate safely.
 
 ## Guiding principle
 
