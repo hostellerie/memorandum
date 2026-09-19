@@ -219,7 +219,7 @@ See [`plugin-content-interoperability-contract.md`](plugin-content-interoperabil
 
 Modernized plugins should declare reusable capabilities once rather than forcing Agent, Hub, Eclipse, AdSense or another consumer to maintain a plugin-specific registry. Capability declaration is descriptive and must map to existing Geeklog APIs, bounded `PLG_invokeService()` services or documented versioned provider contracts.
 
-Eclipse should act as a presentation consumer: its dashboard should discover and render provider-owned `dashboard.summary` data instead of querying plugin-private tables. Hub should consume the same declarations and also expose its own relationship/context capabilities. Agent should adapt the same provider contracts to machine-readable resources and tools without becoming a required dependency for plugin-to-plugin interoperability.
+Eclipse acts as a presentation consumer: Eclipse 1.2 now discovers active plugin capabilities and renders provider-owned `dashboard.summary` data instead of querying plugin-private tables. Structured provider metrics take precedence over legacy plugin statistics for the same provider, explicit alerts plus conventional `pending` / `drafts` metrics can surface in **Needs attention**, and legacy Geeklog statistics remain a fallback for older plugins. Hub should consume the same declarations and also expose its own relationship/context capabilities. Agent should adapt the same provider contracts to machine-readable resources and tools without becoming a required dependency for plugin-to-plugin interoperability.
 
 See [`plugin-capability-contract.md`](plugin-capability-contract.md).
 
