@@ -314,15 +314,32 @@ array(
             'value' => 128
         )
     ),
-    'alerts' => array(),
+    'alerts' => array(
+        array(
+            'id' => 'storage',
+            'status' => 'warning',
+            'message' => 'Persistent storage needs attention.'
+        )
+    ),
     'links' => array(
         array(
             'label' => 'Manage',
             'url' => '...'
         )
-    )
+    ),
+    'updated' => time()
 );
 ```
+
+For current Eclipse 1.2 consumers:
+
+- each metric should provide stable `id`, human-readable `label` and scalar `value`;
+- an alert may use either `label` or `message`; `message` is recommended for operational diagnostics;
+- an alert may provide `count`; when omitted, Eclipse treats the alert as one actionable condition;
+- alert `status` may be `info`, `warning` or `critical`;
+- links should point to same-site administration or management surfaces owned by the provider;
+- the first valid provider link is used as the default management target for metrics and alerts that do not provide their own URL;
+- providers should keep the payload bounded and must not perform external network work merely to render the dashboard.
 
 Recommended top-level fields:
 
@@ -402,6 +419,34 @@ Useful dashboard summaries include:
 - Hub: pillars, relations, broken relations, suggestions and interoperability status.
 
 Eclipse should aggregate and present. The owning provider calculates the meaning of each value.
+
+### Eclipse 1.2 implemented consumer behavior
+
+The current Eclipse 1.2 dashboard implements this contract generically for active plugins:
+
+```text
+active plugin
+    -> plugin_getcapabilities_PLUGIN()
+    -> dashboard.summary declared?
+    -> PLG_invokeService(PLUGIN, 'dashboard_summary', ...)
+    -> validate schema/status
+    -> normalize metrics / alerts / links
+    -> render dashboard
+```
+
+Current behavior intentionally avoids provider-specific adapters:
+
+- structured `dashboard.summary` metrics are preferred over legacy `PLG_getPluginStats()` rows for the same provider, preventing duplicate statistics;
+- legacy plugin statistics remain as a compatibility fallback when no structured dashboard metrics are exposed;
+- metrics are displayed in the generic plugin-content statistics area;
+- provider management links are attached to metric labels when available;
+- explicit alerts are promoted to the dashboard's **Needs attention** area;
+- conventional metric IDs `pending` and `drafts` are also promoted to **Needs attention** when their value is greater than zero;
+- `pending` is treated as an operational warning and `drafts` as informational/editorial work;
+- one provider failing, denying access or returning an unsupported payload must not break the complete dashboard;
+- provider permissions remain authoritative: Eclipse never bypasses them and never queries provider-private tables.
+
+This means a newly modernized plugin can become visible in Eclipse without an Eclipse-specific integration simply by declaring `dashboard.summary` and implementing the bounded service contract.
 
 ---
 
@@ -788,12 +833,19 @@ Add or finalize capability declarations and `dashboard.summary` where practical 
 
 Do not destabilize an otherwise ready release merely to add nonessential optional capabilities; capability work must remain bounded and tested.
 
-### P1 — Eclipse 1.2
+### P1 — Eclipse 1.2 — implemented
 
-- implement generic capability discovery;
-- consume `dashboard.summary`;
-- render provider cards without private-table access;
-- degrade gracefully for legacy providers.
+Eclipse 1.2 now:
+
+- implements generic capability discovery through `plugin_getcapabilities_PLUGIN()`;
+- consumes `dashboard.summary` through `PLG_invokeService()`;
+- renders provider-owned metrics and management links without private-table access;
+- promotes provider alerts plus conventional `pending` / `drafts` metrics into **Needs attention**;
+- prefers structured dashboard metrics over legacy plugin statistics for the same provider to avoid duplicate presentation;
+- degrades gracefully to native Geeklog plugin statistics for legacy providers;
+- isolates invalid, unauthorized or unavailable provider summaries so one plugin cannot break the dashboard.
+
+Documents 1.2 and Videos 0.20 are current reference implementations of the provider side of this contract.
 
 ### P1 — Hub
 
