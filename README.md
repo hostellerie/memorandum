@@ -172,6 +172,10 @@ Upgrade routines should be:
 - safe when interrupted;
 - careful not to delete legacy data until migration has been verified.
 
+Modernized plugins should also implement a complete `plugin_autouninstall_PLUGIN()` contract. This is required not only for a normal uninstall, but also so Geeklog can roll back a failed installation cleanly. The auto-uninstall metadata should list every plugin-owned table, group, feature, PHP block and plugin variable that Geeklog must remove. It must be available during the install path as well as the normal plugin lifecycle when required by the target Geeklog versions. A failed installation must not leave groups, features, configuration records or tables that cause the next installation attempt to fail with duplicate-entry errors.
+
+Installation tests should therefore include an intentional failure after groups/features/tables have begun to be created, followed by verification that `PLG_uninstall()` removes the partial state and that a second install succeeds without manual database cleanup.
+
 Configuration defaults for new installations and configuration migration for existing installations are separate concerns and should be tested separately.
 
 When plugin files can be shared by several Geeklog sites, new files must also remain operational with the previous supported persisted plugin state until the active site's explicit upgrade completes. See [`plugin-shared-files-upgrade-safety.md`](plugin-shared-files-upgrade-safety.md).
