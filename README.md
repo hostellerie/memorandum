@@ -160,6 +160,26 @@ Plugin output should remain theme-independent. Eclipse may serve as a modern ref
 
 Eclipse should preserve native compatibility with both the legacy theme expectations of Geeklog 2.1.1 and the newer theme architecture of Geeklog 2.2.2 through explicit compatibility handling rather than separate incompatible editions where practical.
 
+## Blank pages and silent fatal errors
+
+A completely blank page should be treated as a bootstrap/runtime failure until proven otherwise, not as a template problem.
+
+When a plugin page renders no Geeklog header, no Root Debugging message and no useful HTML, diagnose the common execution path first:
+
+- verify the plugin bootstrap files loaded by `lib-common.php`, especially `functions.inc` and any files it requires unconditionally;
+- run `php -l` on every `.php` and `.inc` file included in the distribution, because PHP 8 may reject syntax that older PHP versions accepted;
+- inspect the exact server `error.log` entry produced by the request; do not rely only on the browser response or Geeklog Root Debugging;
+- search for unconditional `die()`, `exit`, direct-inclusion guards and early returns in files loaded globally;
+- distinguish page-specific failures from bootstrap failures by testing both an administrative page and a public page that share the same plugin loader;
+- audit direct array access to optional request, session, configuration and legacy serialized-data keys, since PHP 8 reports undefined offsets/keys that older versions often tolerated;
+- ensure new-install configuration contains every key used during unconditional plugin bootstrap;
+- validate that language arrays required during bootstrap are loaded before use, or provide bootstrap-safe defaults;
+- avoid suppressing the root cause with `@`; suppression may hide the only useful diagnostic on production-like hosts.
+
+A plugin distribution workflow should lint all shipped `.php` and `.inc` files before producing or publishing an installable archive. A build containing a PHP syntax error must fail before the archive reaches `dist/`.
+
+For a blank page affecting several unrelated plugin URLs, start with the shared bootstrap path rather than the page templates. Templates should only be investigated after the common bootstrap, syntax and runtime checks pass.
+
 ## Installation and upgrades
 
 Modernization must preserve existing installations.
