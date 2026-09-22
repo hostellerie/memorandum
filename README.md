@@ -126,9 +126,15 @@ Eclipse itself should provide version-aware compatibility layers where Geeklog 2
 
 ## Rendering
 
-For Geeklog versions supporting the modern document rendering path, prefer `COM_createHTMLDocument()` for new or substantially modernized pages.
+For plugins targeting the current transition baseline **Geeklog 2.1.1 through 2.2.2**, use `COM_createHTMLDocument()` for complete-page rendering. It is available in the supported range and is the common rendering path across these versions.
 
-Do not describe legacy rendering functions as universally removed unless that statement has been verified for the exact Geeklog version being targeted. Compatibility code may still be necessary for older supported releases.
+Do not build or retain modernized plugin pages around `COM_siteHeader()` / `COM_siteFooter()`. These legacy functions are not available in Geeklog 2.2.x and can therefore produce fatal errors or completely blank pages when a plugin that still uses them is opened under Geeklog 2.2.2.
+
+When a page works under Geeklog 2.1.1 but becomes blank under Geeklog 2.2.2, audit the rendering path immediately for direct or indirect calls to `COM_siteHeader()` and `COM_siteFooter()` before investigating the plugin's `.thtml` files.
+
+A modernized page should build its content first and render the final document once, for example through `COM_createHTMLDocument($content, $options)`. Keep page content generation separate from document-shell rendering so the same business logic remains compatible with different Geeklog themes.
+
+Do not describe other legacy rendering facilities as removed unless that statement has been verified for the exact Geeklog version being targeted.
 
 ## Assets
 
