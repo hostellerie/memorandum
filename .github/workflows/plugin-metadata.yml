@@ -23,6 +23,9 @@ jobs:
     env:
       PLUGIN_METADATA_ORG: Geeklog-Plugins
       PLUGIN_METADATA_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'audit' }}
+      # Authenticated token used for read-only GitHub API calls during audits.
+      # This avoids the very low unauthenticated API rate limit.
+      GITHUB_TOKEN: ${{ github.token }}
       # Required only for mode=pr. Use a fine-grained PAT or GitHub App token
       # with Contents: write and Pull requests: write on target repositories.
       PLUGIN_METADATA_TOKEN: ${{ secrets.PLUGIN_METADATA_TOKEN }}
