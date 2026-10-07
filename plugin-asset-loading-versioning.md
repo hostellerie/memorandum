@@ -64,6 +64,29 @@ The exact path may differ by plugin layout. The important contract is conditiona
 
 Every shipped CSS/JS URL should contain a cache-busting value that changes when the asset may have changed.
 
+### Important Geeklog Resource caveat
+
+Do **not** append a query string directly to a local filesystem-style asset path passed to `$_SCRIPTS->setCSSFile()` or `$_SCRIPTS->setJavaScriptFile()` on the 2.1.x/2.2.x compatibility range.
+
+For example, avoid:
+
+```php
+$_SCRIPTS->setCSSFile(
+    'myplugin',
+    '/myplugin/css/style.css?v=1.2.0'
+);
+```
+
+Geeklog's Resource loader validates local resources with an `is_file()` / readability check using the supplied path. A query string can therefore make the physical existence check fail, causing the asset not to be emitted at all.
+
+Safe patterns are:
+
+1. return a versioned `<link>` tag from `plugin_getheadercode_PLUGIN()` after resolving the real plugin/theme CSS path; or
+2. register a fully qualified public URL (for example `https://example.com/myplugin/app.js?v=1.2.0`) when the Resource API path treats it as an external URL and therefore does not perform a local `is_file()` check; or
+3. keep the native local-path loader unversioned when a specific helper requires a physical relative path, unless that helper is confirmed to support query strings.
+
+Always verify the **rendered HTML** after an upgrade and confirm the expected CSS/JS tag is actually present. CI should also test the runtime loading strategy where practical, not merely grep for `?v=` in source code.
+
 Acceptable strategies include:
 
 - plugin release version:
