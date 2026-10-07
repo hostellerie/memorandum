@@ -1182,7 +1182,31 @@ CI should inspect the produced archive and verify:
 - required files present **under that root directory**;
 - forbidden files absent;
 - PHP syntax of shipped files;
-- archive name/version consistency.
+- archive name/version consistency;
+- at least one critical runtime file extracted from the ZIP is byte-for-byte identical to the source file from the commit being packaged.
+
+For higher confidence, compare several critical files, especially files that control plugin bootstrap, installation, upgrades, and core runtime behavior, for example:
+
+- `autoinstall.php`;
+- `functions.inc`;
+- `include/functions.php`;
+- the plugin's main class or service file.
+
+A release workflow must validate the **actual extracted ZIP payload**, not only the staging directory or repository tree. This catches stale archives, incorrect staging roots, omitted files, and packaging workflows that accidentally publish code from an older commit.
+
+A practical pattern is:
+
+```bash
+rm -rf verify
+mkdir verify
+unzip -q "$ARCHIVE" -d verify
+
+cmp -s "autoinstall.php" "verify/$PLUGIN/autoinstall.php"
+cmp -s "functions.inc" "verify/$PLUGIN/functions.inc"
+cmp -s "include/functions.php" "verify/$PLUGIN/include/functions.php"
+```
+
+If any comparison fails, the distribution job must fail. Do not publish the ZIP.
 
 A practical shell check is:
 
