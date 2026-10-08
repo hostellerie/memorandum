@@ -860,6 +860,14 @@ When implementing a callback:
 2. inspect existing working core/plugin implementations when necessary;
 3. test the callback through Geeklog, not only by calling your function directly.
 
+## Provider-side Item Info compatibility rule
+
+Modernized content providers (including Documents, Videos, Maps, FAQ, Downloads and future plugins) **must return a scalar for a single requested property on one concrete item**: `PLG_getItemInfo('PLUGIN', $id, 'url', $uid)` should return a URL string, not `array($url)` or `array('url' => $url)`. Native Geeklog's What's New comments block uses the result directly as a string; array returns can trigger `Array to string conversion`. Missing/inaccessible items must return a safe empty scalar for these single-field requests.
+
+Keep multi-property concrete-item results ordered and keep wildcard `'*'` collections structured, even for a one-field collection query. Do not apply single-property flattening to collections.
+
+Before marking a provider release-ready, test through **Geeklog's dispatcher**: scalar `'url'` and `'title'` lookups; ordered `'id,title,url'` lookup; `'*'` collection; missing/inaccessible IDs; and a public What's New block containing plugin comments. Consumer-side legacy shape normalization remains required separately. See [Plugin content interoperability contract](plugin-content-interoperability-contract.md#single-property-compatibility-with-native-geeklog-consumers).
+
 ## Normalize historical Item Info return shapes at consumer boundaries
 
 Across older and modernized plugins, a concrete Item Info request may be encountered as:
