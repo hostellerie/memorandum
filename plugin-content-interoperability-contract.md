@@ -82,6 +82,33 @@ The exact property set may vary by plugin, but commonly useful names should be k
 
 `hits` is the recommended canonical field for a persisted per-item view counter when the plugin maintains one. A plugin may use another internal column name, but consumers should not need to know that implementation detail.
 
+## Single-property compatibility with native Geeklog consumers
+
+**Provider contract:** For a concrete item ID (not `'*'`), when `$what` requests exactly one property, return its **scalar value** (for example a URL string for `'url'`, a title string for `'title'`, or an empty string when unavailable). Do not return a one-element numeric or associative array. This preserves compatibility with native Geeklog 2.1.1/2.2.2 consumers, including the What's New comments renderer, which concatenates `PLG_getItemInfo($type, $id, 'url')` directly with `'#comments'`. Returning an array produces an *Array to string conversion* warning.
+
+For multiple requested properties on a concrete item, preserve the ordered positional result expected by existing Geeklog callers. For `$id === '*'`, retain the established **collection of records** contract, including when the collection requests one property; do not flatten collections into a scalar.
+
+**Consumer compatibility:** Modern consumers (FAQ, Hub, Hello, Documents, Videos, Maps and other integrations) must continue accepting legacy single-property results in scalar, numeric-array and associative-array forms. This tolerance exists for older providers and **does not remove the scalar requirement for newly modernized providers**. Normalize at the consumer boundary rather than weakening native compatibility.
+
+Provider acceptance tests (run through the real `PLG_getItemInfo` dispatcher under appropriate permissions):
+
+```php
+$url = PLG_getItemInfo('PLUGIN', $publicId, 'url', $uid);
+$title = PLG_getItemInfo('PLUGIN', $publicId, 'title', $uid);
+assert(is_string($url) && $url !== '');
+assert(is_string($title));
+assert(is_string($url . '#comments'));
+
+$fields = PLG_getItemInfo('PLUGIN', $publicId, 'id,title,url', $uid);
+assert(is_array($fields) && count($fields) === 3);
+assert($fields[2] === $url);
+
+$items = PLG_getItemInfo('PLUGIN', '*', 'id,title,url', $uid);
+assert(is_array($items)); // Collection remains structured
+```
+
+Additionally, exercise a real public page with new comments in the native **What's New** block, and verify there are no PHP warnings. Repeat single-property checks for roots/categories and for inaccessible or missing items when the plugin supports those identities, verifying no restricted metadata leaks. Keep separate regression tests for legacy consumers accepting array-shaped responses.
+
 ## Why this matters
 
 A consumer should be able to request content metadata without accessing plugin tables directly.
