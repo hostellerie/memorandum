@@ -828,6 +828,35 @@ This distinction matters because implementing `plugin_getiteminfo_*()` with coll
 
 The specialized collector remains preferable when sitemap-specific behavior, permissions, filtering, priorities, or performance considerations justify it.
 
+### Native sitemap collector requirements
+
+When a plugin implements `plugin_collectSitemapItems_PLUGIN($uid, $limit)`, the callback should be treated as the canonical sitemap-oriented view of the plugin's public content.
+
+The collector should:
+
+- return only public, indexable, provider-owned canonical GET URLs;
+- never return wildcard, placeholder, session-dependent, POST-only, or generic collection URLs such as `id=*` or `s=*`;
+- deduplicate URLs before returning them, including content that can belong to multiple containers or relationships;
+- apply anonymous/public permission rules consistently with the plugin's normal frontend access model;
+- exclude hidden, disabled, unpublished, unreleased, expired, or otherwise non-indexable resources;
+- distinguish addressable containers from leaf items when both are intended to be indexed, for example plugin root, category/album, and individual item;
+- provide `date-modified`, `change-freq`, and `priority` when the plugin has meaningful sitemap-specific values for them;
+- honor the `$limit` parameter without returning duplicate entries;
+- avoid relying on UI state or generic collection behavior when a dedicated sitemap query can provide a safer and more deterministic result;
+- remain safe during plugin lifecycle transitions. In particular, XMLSitemap may be invoked from a plugin state-change callback before Geeklog has refreshed `$_PLUGINS`. A collector must not assume that the plugin is already fully reflected in the enabled-plugin runtime state during that transient window.
+
+For content that can appear in more than one container, one canonical resource URL should normally be emitted once. Container pages may be emitted separately only when they are themselves stable, public, indexable resources.
+
+Example hierarchy:
+
+```text
+plugin root
+  -> category / album / container
+     -> individual content item
+```
+
+The native collector should not merely expose every row returned by an internal relationship join. It should expose the canonical sitemap representation of the provider's public content.
+
 Lifecycle notifications complement this collection contract: XMLSitemap may listen to `PLG_itemSaved()` and `PLG_itemDeleted()` to know when tracked content changes, while the collector or Item Info interface remains responsible for supplying the addressable content itself.
 
 ## Services
